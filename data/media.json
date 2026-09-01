@@ -1,0 +1,180 @@
+[
+  {
+    "id": "956c07eb-688c-4fbd-85ad-36b20d360212",
+    "title": "Cyberpunk Neon Horizon",
+    "description": "Futuristic retrowave cityscape with vibrant neon grid and sunset gradients.",
+    "type": "wallpaper",
+    "originalName": "cyberpunk_neon_horizon.svg",
+    "filename": "seed_wallpaper_1.svg",
+    "mimeType": "image/svg+xml",
+    "fileSize": 2106,
+    "url": "/uploads/wallpapers/seed_wallpaper_1.svg",
+    "tags": [
+      "cyberpunk",
+      "neon",
+      "retrowave",
+      "city",
+      "aesthetic",
+      "4k",
+      "dark"
+    ],
+    "createdAt": "2026-09-01T11:26:59.676Z",
+    "updatedAt": "2026-09-01T11:26:59.678Z"
+  },
+  {
+    "id": "1edd2eb9-a421-4cd5-9f26-e2e96381844a",
+    "title": "Emerald Forest Mist",
+    "description": "Calm morning mist rolling through majestic mountain pine valleys in deep emerald green.",
+    "type": "wallpaper",
+    "originalName": "emerald_forest_mist.svg",
+    "filename": "seed_wallpaper_2.svg",
+    "mimeType": "image/svg+xml",
+    "fileSize": 1107,
+    "url": "/uploads/wallpapers/seed_wallpaper_2.svg",
+    "tags": [
+      "nature",
+      "forest",
+      "mountains",
+      "minimal",
+      "calm",
+      "green",
+      "wallpaper"
+    ],
+    "createdAt": "2026-09-01T12:26:59.679Z",
+    "updatedAt": "2026-09-01T12:26:59.679Z"
+  },
+  {
+    "id": "eb1baad5-a8cd-4aee-a8c8-88907d790752",
+    "title": "Fluid Chroma Wave 3D",
+    "description": "Lush 3D fluid iridescent ribbon with smooth violet and electric sapphire ribbons.",
+    "type": "wallpaper",
+    "originalName": "fluid_chroma_wave_3d.svg",
+    "filename": "seed_wallpaper_3.svg",
+    "mimeType": "image/svg+xml",
+    "fileSize": 1333,
+    "url": "/uploads/wallpapers/seed_wallpaper_3.svg",
+    "tags": [
+      "abstract",
+      "3d",
+      "purple",
+      "modern",
+      "amoled",
+      "fluid",
+      "trending"
+    ],
+    "createdAt": "2026-09-01T13:26:59.680Z",
+    "updatedAt": "2026-09-01T13:26:59.680Z"
+  },
+  {
+    "id": "c38fe7ca-d73b-426a-9fb6-50d8d4eaea7e",
+    "title": "Midnight Lunar Oasis",
+    "description": "Deep space lunar landscape with stardust cosmic particles and glowing celestial sphere.",
+    "type": "wallpaper",
+    "originalName": "midnight_lunar_oasis.svg",
+    "filename": "seed_wallpaper_4.svg",
+    "mimeType": "image/svg+xml",
+    "fileSize": 1037,
+    "url": "/uploads/wallpapers/seed_wallpaper_4.svg",
+    "tags": [
+      "space",
+      "moon",
+      "minimal",
+      "night",
+      "stars",
+      "galaxy",
+      "wallpaper",
+      "hd"
+    ],
+    "createdAt": "2026-09-01T14:26:59.681Z",
+    "updatedAt": "2026-09-01T15:49:39.796Z"
+  },
+  {
+    "id": "6e896898-5bd7-4b93-941d-af825aa4d910",
+    "title": "Aura Crystal Breeze",
+    "description": "Gentle crystal acoustic chime notification tone for messages and alerts.",
+    "type": "audio",
+    "audioType": "ringtone",
+    "originalName": "aura_crystal_breeze.wav",
+    "filename": "seed_audio_1.wav",
+    "mimeType": "audio/wav",
+    "fileSize": 158804,
+    "url": "/uploads/audios/seed_audio_1.wav",
+    "tags": [
+      "notification",
+      "chime",
+      "crystal",
+      "alert",
+      "soft",
+      "clean",
+      "trending"
+    ],
+    "createdAt": "2026-09-01T13:06:59.717Z",
+    "updatedAt": "2026-09-01T15:44:22.472Z"
+  },
+  {
+    "id": "70331536-5097-47ae-9f4a-8bec2bbb20a0",
+    "title": "Zenith Marimba Ringtone",
+    "description": "Upbeat melodic marimba progression with rhythmic acoustic timbre.",
+    "type": "audio",
+    "audioType": "ringtone",
+    "originalName": "zenith_marimba_ringtone.wav",
+    "filename": "seed_audio_2.wav",
+    "mimeType": "audio/wav",
+    "fileSize": 352844,
+    "url": "/uploads/audios/seed_audio_2.wav",
+    "tags": [
+      "ringtone",
+      "marimba",
+      "melody",
+      "upbeat",
+      "call",
+      "popular"
+    ],
+    "createdAt": "2026-09-01T13:53:39.734Z",
+    "updatedAt": "2026-09-01T13:53:39.734Z"
+  },
+  {
+    "id": "ec09dcc5-bd83-4ae2-83ee-09c38bcf8c3f",
+    "title": "Subtle Glass Ping",
+    "description": "Minimal crisp glass ping notification designed for distraction-free alerts.",
+    "type": "audio",
+    "audioType": "notification",
+    "originalName": "subtle_glass_ping.wav",
+    "filename": "seed_audio_3.wav",
+    "mimeType": "audio/wav",
+    "fileSize": 105884,
+    "url": "/uploads/audios/seed_audio_3.wav",
+    "tags": [
+      "notification",
+      "minimal",
+      "glass",
+      "short",
+      "ping",
+      "modern"
+    ],
+    "createdAt": "2026-09-01T14:40:19.739Z",
+    "updatedAt": "2026-09-01T14:40:19.739Z"
+  },
+  {
+    "id": "21aa8c05-7da6-4bd5-ab88-0951dccfe45a",
+    "title": "Cosmic Pulse Anthem",
+    "description": "Electronic synth arpeggio ringtone with warm resonant harmonics.",
+    "type": "audio",
+    "audioType": "ringtone",
+    "originalName": "cosmic_pulse_anthem.wav",
+    "filename": "seed_audio_4.wav",
+    "mimeType": "audio/wav",
+    "fileSize": 396944,
+    "url": "/uploads/audios/seed_audio_4.wav",
+    "tags": [
+      "ringtone",
+      "synth",
+      "electronic",
+      "ambient",
+      "loop",
+      "modern"
+    ],
+    "createdAt": "2026-09-01T15:26:59.751Z",
+    "updatedAt": "2026-09-01T15:26:59.751Z"
+  }
+]

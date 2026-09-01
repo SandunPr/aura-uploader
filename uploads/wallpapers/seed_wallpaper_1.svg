@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+      <defs>
+        <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#090514"/>
+          <stop offset="50%" stop-color="#2d124d"/>
+          <stop offset="75%" stop-color="#801974"/>
+          <stop offset="100%" stop-color="#ff598f"/>
+        </linearGradient>
+        <linearGradient id="sun" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffe600"/>
+          <stop offset="100%" stop-color="#ff007f"/>
+        </linearGradient>
+        <linearGradient id="gridGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#00ffff" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
+        </linearGradient>
+      </defs>
+      <rect width="1080" height="1920" fill="url(#sky)"/>
+      <circle cx="540" cy="980" r="280" fill="url(#sun)"/>
+      <rect x="0" y="1050" width="1080" height="870" fill="#0c0721"/>
+      <g stroke="#00f3ff" stroke-width="3" opacity="0.6">
+        <line x1="540" y1="1050" x2="-400" y2="1920"/>
+        <line x1="540" y1="1050" x2="0" y2="1920"/>
+        <line x1="540" y1="1050" x2="300" y2="1920"/>
+        <line x1="540" y1="1050" x2="540" y2="1920"/>
+        <line x1="540" y1="1050" x2="780" y2="1920"/>
+        <line x1="540" y1="1050" x2="1080" y2="1920"/>
+        <line x1="540" y1="1050" x2="1480" y2="1920"/>
+        <line x1="0" y1="1120" x2="1080" y2="1120"/>
+        <line x1="0" y1="1220" x2="1080" y2="1220"/>
+        <line x1="0" y1="1350" x2="1080" y2="1350"/>
+        <line x1="0" y1="1520" x2="1080" y2="1520"/>
+        <line x1="0" y1="1740" x2="1080" y2="1740"/>
+      </g>
+      <polygon points="120,1050 200,880 260,950 340,780 440,1050" fill="#070312"/>
+      <polygon points="620,1050 720,840 820,960 920,720 1020,1050" fill="#070312"/>
+      <text x="540" y="400" font-family="'Outfit', sans-serif" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="8">AURA SYNTH</text>
+    </svg>

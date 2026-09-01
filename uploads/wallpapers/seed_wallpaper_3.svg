@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0a051b"/>
+          <stop offset="100%" stop-color="#180b38"/>
+        </linearGradient>
+        <linearGradient id="ribbon1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4f46e5"/>
+          <stop offset="50%" stop-color="#9333ea"/>
+          <stop offset="100%" stop-color="#ec4899"/>
+        </linearGradient>
+        <linearGradient id="ribbon2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#06b6d4"/>
+          <stop offset="100%" stop-color="#3b82f6"/>
+        </linearGradient>
+      </defs>
+      <rect width="1080" height="1920" fill="url(#bg)"/>
+      <path d="M -100 600 C 400 300, 600 1200, 1180 900 L 1180 1400 C 600 1700, 400 900, -100 1200 Z" fill="url(#ribbon1)" opacity="0.85"/>
+      <path d="M -50 900 C 500 700, 700 1600, 1150 1300 L 1150 1800 C 700 2000, 500 1200, -50 1500 Z" fill="url(#ribbon2)" opacity="0.9"/>
+      <circle cx="300" cy="450" r="8" fill="#ffffff" opacity="0.7"/>
+      <circle cx="800" cy="1550" r="12" fill="#ffffff" opacity="0.5"/>
+      <circle cx="900" cy="300" r="6" fill="#38bdf8" opacity="0.8"/>
+    </svg>
