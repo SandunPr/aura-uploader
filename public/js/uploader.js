@@ -25,6 +25,10 @@ class MediaUploader {
     this.progressStatusText = document.getElementById('progressStatusText');
     this.progressPercentText = document.getElementById('progressPercentText');
 
+    // Audio preview player for staged audio drafts
+    this.previewAudio = new Audio();
+    this.currentPlayingDraftId = null;
+
     this.initEvents();
   }
 
@@ -81,6 +85,16 @@ class MediaUploader {
     window.addEventListener('dragover', (e) => e.preventDefault());
     window.addEventListener('drop', (e) => e.preventDefault());
 
+    // Audio preview events
+    this.previewAudio.addEventListener('ended', () => {
+      this.currentPlayingDraftId = null;
+      this.updateDraftAudioButtons();
+    });
+
+    this.previewAudio.addEventListener('pause', () => {
+      this.updateDraftAudioButtons();
+    });
+
     // Upload Preset Tag handling
     this.presetTagsInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ',') {
@@ -132,6 +146,7 @@ class MediaUploader {
   }
 
   closeModal() {
+    this.stopDraftAudio();
     this.modal.classList.remove('active');
     this.progressBox.style.display = 'none';
     this.progressBarFill.style.width = '0%';
@@ -149,12 +164,14 @@ class MediaUploader {
         // Prevent duplicate file names in current batch
         const exists = this.stagedFiles.some(f => f.name === file.name && f.size === file.size);
         if (!exists) {
+          const previewUrl = URL.createObjectURL(file);
           this.stagedFiles.push({
             file: file,
             id: Math.random().toString(36).substring(7),
             name: file.name,
             size: file.size,
-            type: isAudio ? 'audio' : 'wallpaper'
+            type: isAudio ? 'audio' : 'wallpaper',
+            previewUrl: previewUrl
           });
         }
       } else {
@@ -166,13 +183,78 @@ class MediaUploader {
   }
 
   removeStagedFile(id) {
+    if (this.currentPlayingDraftId === id) {
+      this.stopDraftAudio();
+    }
+    const item = this.stagedFiles.find(f => f.id === id);
+    if (item && item.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl);
+    }
     this.stagedFiles = this.stagedFiles.filter(f => f.id !== id);
     this.updateStagedUI();
   }
 
   clearStaged() {
+    this.stopDraftAudio();
+    this.stagedFiles.forEach(f => {
+      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    });
     this.stagedFiles = [];
     this.updateStagedUI();
+  }
+
+  toggleDraftAudio(id) {
+    const item = this.stagedFiles.find(f => f.id === id);
+    if (!item || item.type !== 'audio' || !item.previewUrl) return;
+
+    // Pause global library audio player if playing
+    if (window.audioPlayer && window.audioPlayer.isPlaying) {
+      window.audioPlayer.stop();
+    }
+
+    if (this.currentPlayingDraftId === id && !this.previewAudio.paused) {
+      this.previewAudio.pause();
+      this.currentPlayingDraftId = null;
+      this.updateDraftAudioButtons();
+      return;
+    }
+
+    this.previewAudio.src = item.previewUrl;
+    this.currentPlayingDraftId = id;
+    this.previewAudio.play().then(() => {
+      this.updateDraftAudioButtons();
+    }).catch(err => {
+      console.warn('Draft audio play error:', err);
+    });
+    this.updateDraftAudioButtons();
+  }
+
+  stopDraftAudio() {
+    if (this.previewAudio) {
+      this.previewAudio.pause();
+      this.previewAudio.currentTime = 0;
+    }
+    this.currentPlayingDraftId = null;
+    this.updateDraftAudioButtons();
+  }
+
+  updateDraftAudioButtons() {
+    this.stagedFiles.forEach(f => {
+      if (f.type === 'audio') {
+        const btn = document.getElementById(`draftPlayBtn-${f.id}`);
+        if (btn) {
+          const isThisPlaying = this.currentPlayingDraftId === f.id && !this.previewAudio.paused;
+          btn.innerHTML = `<i data-lucide="${isThisPlaying ? 'pause' : 'play'}"></i>`;
+          btn.title = isThisPlaying ? 'Pause Draft Audio' : 'Play Draft Audio';
+          if (isThisPlaying) {
+            btn.classList.add('playing');
+          } else {
+            btn.classList.remove('playing');
+          }
+        }
+      }
+    });
+    if (window.lucide) window.lucide.createIcons();
   }
 
   updateStagedUI() {
@@ -192,19 +274,40 @@ class MediaUploader {
         audioPreset.style.display = hasAudio ? 'block' : 'none';
       }
 
-      // Render file list rows
-      this.stagedList.innerHTML = this.stagedFiles.map(f => `
-        <div class="staged-file-row">
-          <div class="staged-file-info">
-            <i data-lucide="${f.type === 'audio' ? 'music' : 'image'}"></i>
-            <span class="staged-file-name" title="${f.name}">${f.name}</span>
-            <span class="staged-file-size">${this.formatBytes(f.size)}</span>
+      // Render draft file list rows with rich preview
+      this.stagedList.innerHTML = this.stagedFiles.map(f => {
+        const isAudio = f.type === 'audio';
+        const isPlaying = isAudio && this.currentPlayingDraftId === f.id && !this.previewAudio.paused;
+
+        return `
+        <div class="staged-file-row ${isAudio ? 'draft-audio-row' : 'draft-wallpaper-row'}">
+          <div class="staged-file-left">
+            ${isAudio 
+              ? `<button type="button" class="btn-draft-play ${isPlaying ? 'playing' : ''}" id="draftPlayBtn-${f.id}" onclick="uploader.toggleDraftAudio('${f.id}')" title="${isPlaying ? 'Pause Draft Audio' : 'Play Draft Audio'}">
+                   <i data-lucide="${isPlaying ? 'pause' : 'play'}"></i>
+                 </button>`
+              : `<img class="draft-wallpaper-thumb" src="${f.previewUrl}" alt="${this.escapeHtml(f.name)}" loading="lazy">`
+            }
+            <div class="staged-file-meta">
+              <div class="staged-name-badge-row">
+                <span class="staged-file-name" title="${this.escapeHtml(f.name)}">${this.escapeHtml(f.name)}</span>
+                <span class="draft-badge ${f.type}">${isAudio ? 'Draft Audio' : 'Draft Wallpaper'}</span>
+              </div>
+              <div class="staged-sub-meta">
+                <span class="staged-file-size">${this.formatBytes(f.size)}</span>
+                ${isAudio 
+                  ? `<span class="draft-audio-hint">&bull; Click play to test audio tone</span>` 
+                  : `<span class="draft-img-hint">&bull; Wallpaper preview ready</span>`
+                }
+              </div>
+            </div>
           </div>
-          <button class="staged-remove-btn" onclick="uploader.removeStagedFile('${f.id}')" aria-label="Remove">
+          <button class="staged-remove-btn" onclick="uploader.removeStagedFile('${f.id}')" title="Remove draft file" aria-label="Remove">
             <i data-lucide="x"></i>
           </button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     } else {
       this.stagedContainer.style.display = 'none';
       this.presetGroup.style.display = 'none';
@@ -239,6 +342,8 @@ class MediaUploader {
 
   async uploadAll() {
     if (this.stagedFiles.length === 0) return;
+
+    this.stopDraftAudio();
 
     const formData = new FormData();
     this.stagedFiles.forEach(item => {
@@ -306,6 +411,16 @@ class MediaUploader {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }
 
