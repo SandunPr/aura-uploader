@@ -1,0 +1,22 @@
+[
+  {
+    "id": "13b63c93-476f-415e-9970-689107352ba2",
+    "username": "AdminCreator",
+    "email": "admin@aura.com",
+    "salt": "676e8cee26c002074a5d6de3b51c8be8",
+    "hash": "c3ae91f45db0596cf905d0501c0316b1627f7f3115437c69981b1cc09eff37a91883a5fc25c5849cd6a200da368f626ce642bacd2d59017e6d1f824bd7dd4316",
+    "role": "admin",
+    "avatarColor": "#10B981",
+    "createdAt": "2026-09-01T16:52:02.834Z"
+  },
+  {
+    "id": "10a3dc10-a6ed-421f-8a9b-7f4b3fa1af02",
+    "username": "CosmicCreator",
+    "email": "cosmic@aura.com",
+    "salt": "7ab91ee603a536fbb01494fc768129f6",
+    "hash": "108401fa5c7f2bf30d8e8a2493e37d98eff09e406a203f91f1f9128363ce8565a1543d211f4677412606b6372963490549b9b77e47f632f1f993f65d0c2668cd",
+    "role": "creator",
+    "avatarColor": "#EC4899",
+    "createdAt": "2026-09-01T16:55:53.149Z"
+  }
+]

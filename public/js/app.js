@@ -5,7 +5,7 @@
 
 class AuraApp {
   constructor() {
-    this.currentTab = 'all'; // 'all' | 'wallpapers' | 'ringtones' | 'notifications'
+    this.currentTab = 'all'; // 'all' | 'my_studio' | 'wallpapers' | 'ringtones' | 'notifications'
     this.searchQuery = '';
     this.currentTagFilter = '';
     this.sortOrder = 'newest';
@@ -57,6 +57,20 @@ class AuraApp {
         this.loadMediaCatalog();
       });
     });
+
+    // Dropdown "My Creator Studio" item
+    const myUploadsDropdownBtn = document.getElementById('dropdownMyUploadsBtn');
+    if (myUploadsDropdownBtn) {
+      myUploadsDropdownBtn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const myStudioTab = document.getElementById('myStudioTab');
+        if (myStudioTab) {
+          myStudioTab.classList.add('active');
+          this.currentTab = 'my_studio';
+          this.loadMediaCatalog();
+        }
+      });
+    }
 
     // Search input with debounce
     let searchDebounce = null;
@@ -135,7 +149,9 @@ class AuraApp {
 
     // Build Query
     const params = new URLSearchParams();
-    if (this.currentTab === 'wallpapers') {
+    if (this.currentTab === 'my_studio') {
+      params.append('scope', 'my');
+    } else if (this.currentTab === 'wallpapers') {
       params.append('type', 'wallpaper');
     } else if (this.currentTab === 'ringtones') {
       params.append('type', 'audio');
@@ -149,24 +165,37 @@ class AuraApp {
     if (this.currentTagFilter) params.append('tag', this.currentTagFilter);
     if (this.sortOrder) params.append('sort', this.sortOrder);
 
-    try {
-      const [mediaRes, statsRes] = await Promise.all([
-        fetch(`/api/media?${params.toString()}`),
-        fetch('/api/media/stats')
-      ]);
+    const authHeaders = window.authManager ? window.authManager.getAuthHeader() : {};
 
-      const mediaData = await mediaRes.json();
-      const statsData = await statsRes.json();
+    try {
+      const promises = [
+        fetch(`/api/media?${params.toString()}`, { headers: authHeaders }),
+        fetch('/api/media/stats', { headers: authHeaders })
+      ];
+
+      if (window.authManager && window.authManager.isLoggedIn()) {
+        promises.push(fetch('/api/media/stats?scope=my', { headers: authHeaders }));
+      }
+
+      const results = await Promise.all(promises);
+      const mediaData = await results[0].json();
+      const statsData = await results[1].json();
+      let myStatsData = null;
+      if (results[2]) {
+        myStatsData = await results[2].json();
+      }
 
       this.mediaLoading.style.display = 'none';
 
       if (statsData.success) {
-        this.updateStats(statsData);
+        this.updateStats(statsData, myStatsData);
       }
 
       if (mediaData.success) {
         this.mediaItems = mediaData.data;
         this.renderCatalog(this.mediaItems);
+      } else if (mediaData.error) {
+        window.showToast(mediaData.error, 'error');
       }
     } catch (err) {
       console.error('Failed to load media:', err);
@@ -175,7 +204,7 @@ class AuraApp {
     }
   }
 
-  updateStats(stats) {
+  updateStats(stats, myStats) {
     document.getElementById('statWallpapers').textContent = stats.wallpapers || 0;
     document.getElementById('statRingtones').textContent = stats.ringtones || 0;
     document.getElementById('statNotifications').textContent = stats.notifications || 0;
@@ -184,6 +213,11 @@ class AuraApp {
     document.getElementById('badgeWallpapers').textContent = stats.wallpapers || 0;
     document.getElementById('badgeRingtones').textContent = stats.ringtones || 0;
     document.getElementById('badgeNotifications').textContent = stats.notifications || 0;
+
+    const myBadge = document.getElementById('badgeMyUploads');
+    if (myBadge) {
+      myBadge.textContent = (myStats && myStats.total) ? myStats.total : 0;
+    }
   }
 
   renderCatalog(items) {
@@ -192,11 +226,14 @@ class AuraApp {
       const emptyTitle = document.getElementById('emptyTitle');
       const emptyDesc = document.getElementById('emptyDesc');
 
-      if (this.searchQuery || this.currentTagFilter) {
+      if (this.currentTab === 'my_studio') {
+        emptyTitle.textContent = 'Your Creator Studio is Empty';
+        emptyDesc.textContent = 'You haven\'t uploaded any wallpapers or audio files yet. Start sharing your creations!';
+      } else if (this.searchQuery || this.currentTagFilter) {
         emptyTitle.textContent = 'No Matches Found';
         emptyDesc.textContent = 'Try adjusting your search keywords or tag filters';
       } else {
-        emptyTitle.textContent = 'No Media Assets Uploaded Yet';
+        emptyTitle.textContent = 'No Media Assets Found';
         emptyDesc.textContent = 'Upload wallpapers or audio tones using the button above';
       }
       return;
@@ -206,7 +243,7 @@ class AuraApp {
     const audios = items.filter(item => item.type === 'audio');
 
     // Render Wallpapers
-    if (wallpapers.length > 0 && ['all', 'wallpapers'].includes(this.currentTab)) {
+    if (wallpapers.length > 0 && ['all', 'my_studio', 'wallpapers'].includes(this.currentTab)) {
       this.wallpapersBlock.style.display = 'flex';
       this.wallpaperCountPill.textContent = `${wallpapers.length} wallpaper${wallpapers.length === 1 ? '' : 's'}`;
       this.renderWallpaperCards(wallpapers);
@@ -215,7 +252,7 @@ class AuraApp {
     }
 
     // Render Audios
-    if (audios.length > 0 && ['all', 'ringtones', 'notifications'].includes(this.currentTab)) {
+    if (audios.length > 0 && ['all', 'my_studio', 'ringtones', 'notifications'].includes(this.currentTab)) {
       this.audiosBlock.style.display = 'flex';
       this.audioCountPill.textContent = `${audios.length} audio file${audios.length === 1 ? '' : 's'}`;
       this.renderAudioCards(audios);
@@ -227,7 +264,13 @@ class AuraApp {
   }
 
   renderWallpaperCards(wallpapers) {
+    const currentUserId = window.authManager?.currentUser?.id;
+    const isAdmin = window.authManager?.currentUser?.role === 'admin';
+
     this.wallpaperGrid.innerHTML = wallpapers.map(item => {
+      const isOwner = !item.userId || item.userId === currentUserId || isAdmin;
+      const authorName = item.author || 'Aura Creator';
+
       const tagHtml = (item.tags || []).slice(0, 4).map(tag => `
         <span class="tag-chip" onclick="app.setTagFilter('${this.escapeHtml(tag)}')">#${this.escapeHtml(tag)}</span>
       `).join('');
@@ -239,31 +282,36 @@ class AuraApp {
             <div class="wallpaper-overlay">
               <div class="overlay-top-row">
                 <span class="resolution-badge">HD</span>
+                <span class="author-pill"><i data-lucide="user"></i> ${this.escapeHtml(authorName)}</span>
               </div>
               <div class="overlay-actions-row">
                 <button class="icon-btn-blur" onclick="event.stopPropagation(); app.openLightbox('${item.id}')" title="Preview Fullscreen">
                   <i data-lucide="maximize-2"></i>
                 </button>
+                ${isOwner ? `
                 <button class="icon-btn-blur" onclick="event.stopPropagation(); app.openEditor('${item.id}')" title="Edit Metadata">
                   <i data-lucide="edit-3"></i>
-                </button>
+                </button>` : ''}
                 <a href="${item.url}" download="${this.escapeHtml(item.title)}" class="icon-btn-blur" onclick="event.stopPropagation()" title="Download">
                   <i data-lucide="download"></i>
                 </a>
+                ${isOwner ? `
                 <button class="icon-btn-blur danger" onclick="event.stopPropagation(); app.promptDelete('${item.id}', '${this.escapeHtml(item.title)}')" title="Delete">
                   <i data-lucide="trash-2"></i>
-                </button>
+                </button>` : ''}
               </div>
             </div>
           </div>
           <div class="wallpaper-info">
-            <h3 class="wallpaper-title" title="${this.escapeHtml(item.title)}">${this.escapeHtml(item.title)}</h3>
+            <div class="wallpaper-title-row">
+              <h3 class="wallpaper-title" title="${this.escapeHtml(item.title)}">${this.escapeHtml(item.title)}</h3>
+            </div>
             <p class="wallpaper-desc">${item.description ? this.escapeHtml(item.description) : '<span style="color:#94a3b8;font-style:italic;">No description added</span>'}</p>
             <div class="tag-cloud">
               ${tagHtml}
             </div>
             <div class="card-footer-meta">
-              <span>${this.formatBytes(item.fileSize || 0)}</span>
+              <span>By ${this.escapeHtml(authorName)}</span>
               <span>${new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
@@ -273,7 +321,12 @@ class AuraApp {
   }
 
   renderAudioCards(audios) {
+    const currentUserId = window.authManager?.currentUser?.id;
+    const isAdmin = window.authManager?.currentUser?.role === 'admin';
+
     this.audioList.innerHTML = audios.map(item => {
+      const isOwner = !item.userId || item.userId === currentUserId || isAdmin;
+      const authorName = item.author || 'Aura Creator';
       const isNotification = item.audioType === 'notification';
       const badgeClass = isNotification ? 'badge-notification' : 'badge-ringtone';
       const badgeIcon = isNotification ? 'bell' : 'music-2';
@@ -318,20 +371,22 @@ class AuraApp {
 
           <div class="audio-card-footer">
             <div class="card-footer-meta" style="margin-top:0;padding-top:0;border:none;">
-              <span>${this.formatBytes(item.fileSize || 0)}</span>
+              <span>By ${this.escapeHtml(authorName)}</span>
               <span>&bull;</span>
               <span>${new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
             <div class="audio-actions">
+              ${isOwner ? `
               <button class="btn-icon-subtle" onclick="app.openEditor('${item.id}')" title="Edit Metadata">
                 <i data-lucide="edit-3"></i>
-              </button>
+              </button>` : ''}
               <a href="${item.url}" download="${this.escapeHtml(item.title)}.wav" class="btn-icon-subtle" title="Download">
                 <i data-lucide="download"></i>
               </a>
+              ${isOwner ? `
               <button class="btn-icon-subtle danger" onclick="app.promptDelete('${item.id}', '${this.escapeHtml(item.title)}')" title="Delete">
                 <i data-lucide="trash-2"></i>
-              </button>
+              </button>` : ''}
             </div>
           </div>
         </div>
@@ -351,12 +406,19 @@ class AuraApp {
     const item = this.mediaItems.find(m => m.id === id);
     if (!item) return;
 
+    const currentUserId = window.authManager?.currentUser?.id;
+    const isOwner = !item.userId || item.userId === currentUserId || window.authManager?.currentUser?.role === 'admin';
+
     this.currentLightboxMedia = item;
     this.lightboxImage.src = item.url;
     this.lightboxTitle.textContent = item.title;
     this.lightboxDesc.textContent = item.description || 'No description';
     this.lightboxDownloadBtn.href = item.url;
     this.lightboxDownloadBtn.download = item.title;
+
+    if (this.lightboxEditBtn) {
+      this.lightboxEditBtn.style.display = isOwner ? 'inline-flex' : 'none';
+    }
 
     this.lightboxModal.classList.add('active');
     if (window.lucide) window.lucide.createIcons();
@@ -389,7 +451,10 @@ class AuraApp {
     }
 
     try {
-      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/media/${id}`, {
+        method: 'DELETE',
+        headers: window.authManager ? window.authManager.getAuthHeader() : {}
+      });
       const result = await res.json();
       if (result.success) {
         window.showToast('Media file deleted from server', 'info');
@@ -456,3 +521,4 @@ document.addEventListener('DOMContentLoaded', () => {
   window.app.loadMediaCatalog();
   if (window.lucide) window.lucide.createIcons();
 });
+

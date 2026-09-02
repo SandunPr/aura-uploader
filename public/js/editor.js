@@ -226,7 +226,10 @@ class MetadataEditor {
     try {
       const response = await fetch(`/api/media/${this.currentMedia.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(window.authManager ? window.authManager.getAuthHeader() : {})
+        },
         body: JSON.stringify(updatePayload)
       });
 
@@ -237,6 +240,9 @@ class MetadataEditor {
         if (window.app) window.app.loadMediaCatalog();
       } else {
         window.showToast(result.error || 'Failed to update metadata', 'error');
+        if (response.status === 401 && window.authManager) {
+          window.authManager.openModal('login');
+        }
       }
     } catch (err) {
       console.error('Error updating metadata:', err);

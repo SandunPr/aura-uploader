@@ -139,6 +139,12 @@ class MediaUploader {
   }
 
   openModal() {
+    if (!window.authManager || !window.authManager.isLoggedIn()) {
+      window.showToast('Please sign in or create an account to upload media.', 'info');
+      if (window.authManager) window.authManager.openModal('login');
+      return;
+    }
+
     this.renderPresetTags();
     this.modal.classList.add('active');
     this.updateStagedUI();
@@ -374,6 +380,7 @@ class MediaUploader {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
+        headers: window.authManager ? window.authManager.getAuthHeader() : {},
         body: formData
       });
 

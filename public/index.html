@@ -47,8 +47,47 @@
         </div>
       </div>
 
-      <!-- Header Actions -->
+      <!-- Header Actions & User Auth Section -->
       <div class="header-actions">
+        <!-- Logged Out Controls -->
+        <div class="header-auth-group" id="headerLoggedOutGroup">
+          <button class="btn btn-secondary btn-sm" id="headerSignInBtn">
+            <i data-lucide="log-in"></i>
+            <span>Sign In</span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="headerSignUpBtn">
+            <i data-lucide="user-plus"></i>
+            <span>Sign Up</span>
+          </button>
+        </div>
+
+        <!-- Logged In Controls -->
+        <div class="header-user-group" id="headerLoggedInGroup" style="display: none;">
+          <div class="user-profile-pill" id="userProfilePill" title="Account Menu">
+            <div class="user-avatar-circle" id="userAvatarCircle">
+              <span id="userAvatarInitial">U</span>
+            </div>
+            <span class="user-name-label" id="headerUserName">Creator</span>
+            <i data-lucide="chevron-down" class="dropdown-chevron"></i>
+          </div>
+
+          <!-- User Dropdown Menu -->
+          <div class="user-menu-dropdown" id="userMenuDropdown">
+            <div class="dropdown-header">
+              <span class="dropdown-user-role">Creator Account</span>
+            </div>
+            <button class="dropdown-item" id="dropdownMyUploadsBtn">
+              <i data-lucide="folder-user"></i>
+              <span>My Creator Studio</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" id="dropdownLogoutBtn">
+              <i data-lucide="log-out"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+
         <button class="btn btn-primary" id="openUploadBtn">
           <i data-lucide="cloud-upload"></i>
           <span>Upload Media</span>
@@ -86,6 +125,11 @@
           <i data-lucide="layers"></i>
           <span>All Media</span>
           <span class="tab-badge" id="badgeAll">0</span>
+        </button>
+        <button class="tab-btn studio-tab" id="myStudioTab" data-tab="my_studio" style="display: none;">
+          <i data-lucide="sparkles"></i>
+          <span>My Uploads</span>
+          <span class="tab-badge studio-badge" id="badgeMyUploads">0</span>
         </button>
         <button class="tab-btn" data-tab="wallpapers">
           <i data-lucide="image"></i>
@@ -487,10 +531,111 @@
     </div>
   </div>
 
+  <!-- ============================================== -->
+  <!-- MODAL: Authentication (Sign In & Sign Up)      -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <i data-lucide="shield-check"></i>
+          </div>
+          <div>
+            <h3 id="authModalTitle">Welcome to Aura Studio</h3>
+            <p id="authModalSub">Sign in to manage and upload wallpapers & audio tones</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeAuthModalBtn">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <!-- Auth Tabs Switcher -->
+      <div class="auth-tabs-row">
+        <button type="button" class="auth-tab-btn active" data-tab="login">
+          <i data-lucide="log-in"></i> Sign In
+        </button>
+        <button type="button" class="auth-tab-btn" data-tab="register">
+          <i data-lucide="user-plus"></i> Create Account
+        </button>
+      </div>
+
+      <div class="modal-body auth-modal-body">
+        <div class="auth-error-alert" id="authErrorBox" style="display: none;"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form">
+          <div class="form-group">
+            <label class="form-label" for="loginIdentifierInput">
+              Email or Username <span class="required-star">*</span>
+            </label>
+            <input type="text" id="loginIdentifierInput" class="form-input" placeholder="e.g. creator@aura.com or creator123" required autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="loginPasswordInput">
+              Password <span class="required-star">*</span>
+            </label>
+            <input type="password" id="loginPasswordInput" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-auth-submit" id="loginSubmitBtn">
+            <span>Sign In</span>
+            <i data-lucide="arrow-right"></i>
+          </button>
+
+          <p class="auth-switch-text">
+            Don't have an account? <a href="#" id="switchToRegisterLink">Create one now</a>
+          </p>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="auth-form" style="display: none;">
+          <div class="form-group">
+            <label class="form-label" for="regUsernameInput">
+              Creator Username <span class="required-star">*</span>
+            </label>
+            <input type="text" id="regUsernameInput" class="form-input" placeholder="e.g. AuraArtist" required autocomplete="username">
+            <small class="form-hint">At least 3 characters. This will be shown on your uploaded media.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regEmailInput">
+              Email Address <span class="required-star">*</span>
+            </label>
+            <input type="email" id="regEmailInput" class="form-input" placeholder="e.g. artist@example.com" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regPasswordInput">
+              Password <span class="required-star">*</span>
+            </label>
+            <input type="password" id="regPasswordInput" class="form-input" placeholder="Create a secure password (min 6 chars)" required autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-auth-submit" id="registerSubmitBtn">
+            <span>Create Account</span>
+            <i data-lucide="sparkles"></i>
+          </button>
+
+          <p class="auth-switch-text">
+            Already registered? <a href="#" id="switchToLoginLink">Sign in here</a>
+          </p>
+        </form>
+      </div>
+
+      <div class="modal-footer auth-modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelAuthModalBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
+  <script src="js/auth.js"></script>
   <script src="js/player.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/uploader.js"></script>

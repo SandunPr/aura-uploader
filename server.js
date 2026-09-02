@@ -5,6 +5,15 @@ const fs = require('fs');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 
+const {
+  createUser,
+  authenticateUser,
+  createSession,
+  deleteSession,
+  requireAuth,
+  optionalAuth
+} = require('./auth');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -106,13 +115,100 @@ function formatTitleFromFilename(filename) {
 }
 
 // -------------------------------------------------------------
-// REST API ENDPOINTS
+// AUTHENTICATION ENDPOINTS
 // -------------------------------------------------------------
 
-// GET /api/media - Fetch media items with search & filters
-app.get('/api/media', (req, res) => {
+// POST /api/auth/register - Register a new creator/user
+app.post('/api/auth/register', (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ success: false, error: 'Username, email, and password are required.' });
+  }
+
+  if (username.trim().length < 3) {
+    return res.status(400).json({ success: false, error: 'Username must be at least 3 characters long.' });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const user = createUser({ username, email, password });
+    const token = createSession(user.id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully!',
+      token,
+      user
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/auth/login - Authenticate user & issue session token
+app.post('/api/auth/login', (req, res) => {
+  const { identifier, password } = req.body;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ success: false, error: 'Please provide email/username and password.' });
+  }
+
+  try {
+    const user = authenticateUser(identifier, password);
+    const token = createSession(user.id);
+
+    res.json({
+      success: true,
+      message: 'Logged in successfully!',
+      token,
+      user
+    });
+  } catch (err) {
+    res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/auth/logout - Terminate session
+app.post('/api/auth/logout', requireAuth, (req, res) => {
+  deleteSession(req.token);
+  res.json({
+    success: true,
+    message: 'Logged out successfully.'
+  });
+});
+
+// GET /api/auth/me - Validate current session & fetch profile
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user
+  });
+});
+
+// -------------------------------------------------------------
+// REST API ENDPOINTS (MEDIA & STATS)
+// -------------------------------------------------------------
+
+// GET /api/media - Fetch media items with search, filters & user scoping
+app.get('/api/media', optionalAuth, (req, res) => {
   let db = getMediaDB();
-  const { type, audioType, search, tag, sort } = req.query;
+  const { type, audioType, search, tag, sort, scope } = req.query;
+
+  // Scope: 'my' (Personal admin panel) vs 'all'
+  if (scope === 'my') {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Log in to view your personal studio.' });
+    }
+    db = db.filter(item => item.userId === req.user.id);
+  }
 
   // Filter by media category (wallpaper vs audio)
   if (type && type !== 'all') {
@@ -130,7 +226,7 @@ app.get('/api/media', (req, res) => {
     db = db.filter(item => item.tags && item.tags.some(t => t.toLowerCase() === searchTag));
   }
 
-  // Search filter (title, description, tags)
+  // Search filter (title, description, tags, author)
   if (search) {
     const q = search.toLowerCase().trim();
     db = db.filter(item => {
@@ -138,7 +234,8 @@ app.get('/api/media', (req, res) => {
       const matchDesc = (item.description || '').toLowerCase().includes(q);
       const matchTags = (item.tags || []).some(t => t.toLowerCase().includes(q));
       const matchFilename = (item.originalName || '').toLowerCase().includes(q);
-      return matchTitle || matchDesc || matchTags || matchFilename;
+      const matchAuthor = (item.author || '').toLowerCase().includes(q);
+      return matchTitle || matchDesc || matchTags || matchFilename || matchAuthor;
     });
   }
 
@@ -161,9 +258,15 @@ app.get('/api/media', (req, res) => {
   });
 });
 
-// GET /api/media/stats - Summary statistics
-app.get('/api/media/stats', (req, res) => {
-  const db = getMediaDB();
+// GET /api/media/stats - Summary statistics (Global or Personal)
+app.get('/api/media/stats', optionalAuth, (req, res) => {
+  let db = getMediaDB();
+  const { scope } = req.query;
+
+  if (scope === 'my' && req.user) {
+    db = db.filter(item => item.userId === req.user.id);
+  }
+
   const wallpapersCount = db.filter(item => item.type === 'wallpaper').length;
   const audiosCount = db.filter(item => item.type === 'audio').length;
   const ringtonesCount = db.filter(item => item.type === 'audio' && item.audioType === 'ringtone').length;
@@ -204,8 +307,8 @@ app.get('/api/media/:id', (req, res) => {
   res.json({ success: true, data: item });
 });
 
-// POST /api/upload - Handle single or multiple file uploads
-app.post('/api/upload', upload.array('files', 50), (req, res) => {
+// POST /api/upload - Handle single or multiple file uploads (Protected)
+app.post('/api/upload', requireAuth, upload.array('files', 50), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ success: false, error: 'No files provided' });
   }
@@ -242,6 +345,8 @@ app.post('/api/upload', upload.array('files', 50), (req, res) => {
 
     const mediaRecord = {
       id,
+      userId: req.user.id,
+      author: req.user.username,
       title: req.body.title && req.files.length === 1 ? req.body.title : title,
       description: customDescription,
       type: mediaType, // 'wallpaper' | 'audio'
@@ -273,8 +378,8 @@ app.post('/api/upload', upload.array('files', 50), (req, res) => {
   });
 });
 
-// PUT /api/media/:id - Update metadata
-app.put('/api/media/:id', (req, res) => {
+// PUT /api/media/:id - Update metadata (Protected & Ownership-Enforced)
+app.put('/api/media/:id', requireAuth, (req, res) => {
   const db = getMediaDB();
   const index = db.findIndex(m => m.id === req.params.id);
 
@@ -283,6 +388,18 @@ app.put('/api/media/:id', (req, res) => {
   }
 
   const current = db[index];
+
+  // Ownership verification: user can edit their own media or if admin
+  if (current.userId && current.userId !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Permission denied: You can only edit your own media.' });
+  }
+
+  // If item had no owner, assign to editing user
+  if (!current.userId) {
+    current.userId = req.user.id;
+    current.author = req.user.username;
+  }
+
   const { title, description, tags, audioType } = req.body;
 
   if (title !== undefined) current.title = title.trim() || current.title;
@@ -314,13 +431,20 @@ app.put('/api/media/:id', (req, res) => {
   });
 });
 
-// DELETE /api/media/:id - Delete single media
-app.delete('/api/media/:id', (req, res) => {
+// DELETE /api/media/:id - Delete single media (Protected & Ownership-Enforced)
+app.delete('/api/media/:id', requireAuth, (req, res) => {
   const db = getMediaDB();
   const index = db.findIndex(m => m.id === req.params.id);
 
   if (index === -1) {
     return res.status(404).json({ success: false, error: 'Media not found' });
+  }
+
+  const current = db[index];
+
+  // Ownership verification
+  if (current.userId && current.userId !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Permission denied: You can only delete your own media.' });
   }
 
   const [removed] = db.splice(index, 1);
@@ -345,8 +469,8 @@ app.delete('/api/media/:id', (req, res) => {
   });
 });
 
-// POST /api/media/bulk-delete - Bulk delete
-app.post('/api/media/bulk-delete', (req, res) => {
+// POST /api/media/bulk-delete - Bulk delete (Protected & Ownership-Enforced)
+app.post('/api/media/bulk-delete', requireAuth, (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ success: false, error: 'Provide an array of IDs to delete' });
@@ -359,6 +483,12 @@ app.post('/api/media/bulk-delete', (req, res) => {
 
   db.forEach(item => {
     if (idSet.has(item.id)) {
+      // Check ownership
+      if (item.userId && item.userId !== req.user.id && req.user.role !== 'admin') {
+        remaining.push(item);
+        return;
+      }
+
       deletedCount++;
       const subFolder = item.type === 'wallpaper' ? 'wallpapers' : 'audios';
       const filePath = path.join(UPLOADS_DIR, subFolder, item.filename);
@@ -390,3 +520,4 @@ app.listen(PORT, () => {
   console.log(`  🔗 Portal URL: http://localhost:${PORT}`);
   console.log(`===========================================`);
 });
+
